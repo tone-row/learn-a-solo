@@ -1,0 +1,6 @@
+bun run check
+bun run lint:fix
+bun run format
+
+# Add formatted files to the commit
+git add -u
