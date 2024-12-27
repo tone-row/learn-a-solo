@@ -2,7 +2,19 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PlayCircle, PauseCircle, FastForward, Rewind } from "lucide-react";
-import { useYoutubePlayer } from "@/hooks/useYoutubePlayer";
+import {
+  getDuration,
+  getTitle,
+  isPlaying,
+  loadVideo,
+  pauseVideo,
+  playVideo,
+  previewPosition,
+  resetPlayerState,
+  seekTo,
+  setPlaybackRate,
+  useYoutubePlayer,
+} from "@/hooks/useYoutubePlayer";
 import { throttle } from "lodash";
 import { useHistoryStore } from "@/hooks/useHistoryStore";
 import { setEndPoint, setStartPoint, useScrubber } from "@/hooks/useScrubber";
@@ -17,28 +29,17 @@ export function YouTubeLooper({
   end: string | null;
 }) {
   console.log("YouTubeLooper", v, start, end);
-  const [inputVideoId, setInputVideoId] = useState(v ?? "");
+  const [inputVideoId, setInputVideoId] = useState(v ?? "-iVgONy8kMY");
   const [step, setStep] = useState(0);
   const startPoint = useScrubber((state) => state.startPoint);
   const endPoint = useScrubber((state) => state.endPoint);
   const [speed, setSpeed] = useState(1);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
 
-  const {
-    loadVideo,
-    seekTo,
-    setPlaybackRate,
-    playVideo,
-    pauseVideo,
-    getDuration,
-    isPlaying,
-    getTitle,
-    destroyPlayer,
-    isReady,
-    previewPosition,
-  } = useYoutubePlayer();
-
   const addHistory = useHistoryStore((state) => state.addHistory);
+
+  // We need the two effects that this hook runs
+  useYoutubePlayer();
 
   // Create throttled speed update function
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -56,7 +57,7 @@ export function YouTubeLooper({
       50,
       { leading: true },
     ),
-    [setPlaybackRate],
+    [],
   );
 
   // Combined keyboard controls effect
@@ -84,7 +85,7 @@ export function YouTubeLooper({
       window.removeEventListener("keydown", handleKeyDown);
       throttledSpeedUpdate.cancel();
     };
-  }, [step, throttledSpeedUpdate, startPoint, getDuration, seekTo]);
+  }, [startPoint, step, throttledSpeedUpdate]);
 
   // Add loop checking effect, this is how we actually force it to loop is by checking over and over and over
   // useEffect(() => {
@@ -136,12 +137,12 @@ export function YouTubeLooper({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [step, startPoint, getDuration, seekTo]);
+  }, [startPoint, step]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const throttledPreviewPosition = useCallback(
     throttle(previewPosition, 100, { trailing: true, leading: true }),
-    [previewPosition],
+    [],
   );
 
   const handleRangeChange = useCallback(
@@ -177,7 +178,7 @@ export function YouTubeLooper({
     } else {
       playVideo();
     }
-  }, [isPlaying, pauseVideo, playVideo]);
+  }, []);
 
   const handleContinue = useCallback(() => {
     if (step === 1) {
@@ -190,87 +191,74 @@ export function YouTubeLooper({
       });
     }
     setStep((prev) => prev + 1);
-  }, [step, addHistory, getTitle, currentVideoId, startPoint, endPoint]);
+  }, [addHistory, currentVideoId, endPoint, startPoint, step]);
 
   const handleReset = useCallback(() => {
     if (isPlaying()) {
       pauseVideo();
     }
-    destroyPlayer();
+    resetPlayerState();
     setInputVideoId("");
     setCurrentVideoId(null);
     setStep(0);
     setStartPoint(0);
     setEndPoint(100);
     setSpeed(1);
-  }, [pauseVideo, isPlaying, destroyPlayer]);
+  }, []);
 
   // Add URL parameter handling effect
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const videoId = params.get("v");
-    const start = params.get("start");
-    const end = params.get("end");
+  // useEffect(() => {
+  //   const params = new URLSearchParams(window.location.search);
+  //   const videoId = params.get("v");
+  //   const start = params.get("start");
+  //   const end = params.get("end");
 
-    if (videoId && start && end) {
-      // Reset any existing state
-      if (isPlaying()) {
-        pauseVideo();
-      }
-      destroyPlayer();
+  //   if (videoId && start && end) {
+  //     // Reset any existing state
+  //     if (isPlaying()) {
+  //       pauseVideo();
+  //     }
+  //     destroyPlayer();
 
-      // Set up new state
-      setInputVideoId(videoId);
-      setCurrentVideoId(videoId);
-      setStartPoint(Number(start));
-      setEndPoint(Number(end));
-      setSpeed(1);
-      setStep(2);
+  //     // Set up new state
+  //     setInputVideoId(videoId);
+  //     setCurrentVideoId(videoId);
+  //     setStartPoint(Number(start));
+  //     setEndPoint(Number(end));
+  //     setSpeed(1);
+  //     setStep(2);
 
-      // Load the video
-      loadVideo(videoId);
+  //     // Load the video
+  //     loadVideo(videoId);
 
-      // Wait for player to be fully ready
-      let attempts = 0;
-      const maxAttempts = 50; // 5 seconds maximum wait
+  //     // Wait for player to be fully ready
+  //     let attempts = 0;
+  //     const maxAttempts = 50; // 5 seconds maximum wait
 
-      const checkPlayerReady = setInterval(() => {
-        attempts++;
-        if (isReady()) {
-          const duration = getDuration();
-          if (duration > 0) {
-            const startTime = (Number(start) / 100) * duration;
-            seekTo(startTime);
-            setPlaybackRate(1);
-            playVideo();
-            clearInterval(checkPlayerReady);
-            window.history.replaceState({}, "", "/");
-          }
-        }
+  //     const checkPlayerReady = setInterval(() => {
+  //       attempts++;
+  //       if (isReady()) {
+  //         const duration = getDuration();
+  //         if (duration > 0) {
+  //           const startTime = (Number(start) / 100) * duration;
+  //           seekTo(startTime);
+  //           setPlaybackRate(1);
+  //           playVideo();
+  //           clearInterval(checkPlayerReady);
+  //           window.history.replaceState({}, "", "/");
+  //         }
+  //       }
 
-        // Give up after max attempts
-        if (attempts >= maxAttempts) {
-          console.warn("Player failed to initialize after 5 seconds");
-          clearInterval(checkPlayerReady);
-        }
-      }, 100);
+  //       // Give up after max attempts
+  //       if (attempts >= maxAttempts) {
+  //         console.warn("Player failed to initialize after 5 seconds");
+  //         clearInterval(checkPlayerReady);
+  //       }
+  //     }, 100);
 
-      return () => clearInterval(checkPlayerReady);
-    }
-  }, [
-    destroyPlayer,
-    loadVideo,
-    setCurrentVideoId,
-    setSpeed,
-    setStep,
-    isPlaying,
-    pauseVideo,
-    isReady,
-    getDuration,
-    seekTo,
-    setPlaybackRate,
-    playVideo,
-  ]); // Empty dependency array as this should only run once on mount
+  //     return () => clearInterval(checkPlayerReady);
+  //   }
+  // }, []); // Empty dependency array as this should only run once on mount
 
   // Add initialization effect for when video loads
   useEffect(() => {
@@ -284,24 +272,18 @@ export function YouTubeLooper({
         playVideo();
       }
     }
-  }, [
-    step,
-    currentVideoId,
-    getDuration,
-    startPoint,
-    seekTo,
-    setPlaybackRate,
-    playVideo,
-  ]);
+  }, [currentVideoId, startPoint, step]);
 
   // If we have an initial video id, load it
   useEffect(() => {
     if (v) {
       loadVideo(v);
     }
-  }, [v, loadVideo]);
+  }, [v]);
 
-  const handleLoadVideo = () => {
+  const handleLoadVideo = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    debugger;
     loadVideo(inputVideoId, () => {
       // Reset points to full duration when video loads
       setStartPoint(0);
@@ -312,7 +294,7 @@ export function YouTubeLooper({
   };
 
   return (
-    <div className="py-24 grid justify-center content-center gap-2">
+    <div className="py-12 grid justify-center content-center gap-2">
       {currentVideoId && getTitle() && (
         <h1 className="text-xl font-semibold text-center">{getTitle()}</h1>
       )}
@@ -320,7 +302,7 @@ export function YouTubeLooper({
         <div id="youtube-player" />
       </div>
       {step === 0 && (
-        <form className="grid gap-2 w-full">
+        <form className="grid gap-2 w-full" onSubmit={handleLoadVideo}>
           <h2 className="text-lg font-medium">Enter YouTube Video ID</h2>
           <input
             type="text"
@@ -329,7 +311,7 @@ export function YouTubeLooper({
             value={inputVideoId}
             onChange={(e) => setInputVideoId(e.target.value)}
           />
-          <Button className="w-full" onClick={handleLoadVideo}>
+          <Button className="w-full" type="submit">
             Load Video
           </Button>
         </form>
