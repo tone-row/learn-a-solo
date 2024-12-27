@@ -23,9 +23,9 @@ export default function Home() {
   if (!isClient) return null;
 
   return (
-    <main className="grid gap-2 grid-cols-[minmax(0,1fr)_auto]">
+    <main className="h-[100dvh] grid gap-2 grid-cols-[minmax(0,1fr)_auto]">
       <YouTubeLooper v={v} start={start} end={end} />
-      <div className="grid content-start overflow-auto">
+      <div className="grid content-start overflow-auto bg-gray-50">
         <History />
       </div>
     </main>

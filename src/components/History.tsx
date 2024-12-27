@@ -56,7 +56,7 @@ export function History() {
 
   if (history.length === 0) {
     return (
-      <div className="grid gap-4 p-4">
+      <div className="grid gap-4 p-4 bg-gray-50">
         <h2 className="text-lg font-medium">History</h2>
         <p className="text-neutral-500">No history yet</p>
       </div>
@@ -64,7 +64,7 @@ export function History() {
   }
 
   return (
-    <div className="grid gap-4 p-4">
+    <div className="grid gap-4 p-4 bg-gray-50">
       <h2 className="text-lg font-medium">History</h2>
       <div className="grid gap-2">
         {history.map((item) => (
