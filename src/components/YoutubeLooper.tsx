@@ -5,6 +5,7 @@ import { PlayCircle, PauseCircle, FastForward, Rewind } from "lucide-react";
 import { useYoutubePlayer } from "@/hooks/useYoutubePlayer";
 import { throttle } from "lodash";
 import { useHistoryStore } from "@/hooks/useHistoryStore";
+import { setEndPoint, setStartPoint, useScrubber } from "@/hooks/useScrubber";
 
 export function YouTubeLooper({
   v,
@@ -15,10 +16,11 @@ export function YouTubeLooper({
   start: string | null;
   end: string | null;
 }) {
+  console.log("YouTubeLooper", v, start, end);
   const [inputVideoId, setInputVideoId] = useState(v ?? "");
   const [step, setStep] = useState(0);
-  const [startPoint, setStartPoint] = useState(Number(start) ?? 0);
-  const [endPoint, setEndPoint] = useState(Number(end) ?? 100);
+  const startPoint = useScrubber((state) => state.startPoint);
+  const endPoint = useScrubber((state) => state.endPoint);
   const [speed, setSpeed] = useState(1);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
 
@@ -57,13 +59,23 @@ export function YouTubeLooper({
     [setPlaybackRate],
   );
 
-  // Handle keyboard controls for speed
+  // Combined keyboard controls effect
   useEffect(() => {
-    if (step !== 3) return;
+    if (step !== 2) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-      throttledSpeedUpdate(e.key === "ArrowUp");
+      switch (e.key) {
+        case "ArrowUp":
+        case "ArrowDown":
+          e.preventDefault();
+          throttledSpeedUpdate(e.key === "ArrowUp");
+          break;
+        case "r":
+          const duration = getDuration();
+          const startTime = (startPoint / 100) * duration;
+          seekTo(startTime);
+          break;
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -72,7 +84,7 @@ export function YouTubeLooper({
       window.removeEventListener("keydown", handleKeyDown);
       throttledSpeedUpdate.cancel();
     };
-  }, [step, throttledSpeedUpdate]);
+  }, [step, throttledSpeedUpdate, startPoint, getDuration, seekTo]);
 
   // Add loop checking effect, this is how we actually force it to loop is by checking over and over and over
   // useEffect(() => {
@@ -126,20 +138,38 @@ export function YouTubeLooper({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [step, startPoint, getDuration, seekTo]);
 
-  const handleRangeChange = useCallback((values: number[]) => {
-    setStartPoint(values[0]);
-    setEndPoint(values[1]);
-  }, []);
-
-  const handleThumbDragStart = useCallback(
-    (index: number) => {
-      // index 0 is start point, index 1 is end point
-      const isEndPoint = index === 1;
-      const value = isEndPoint ? endPoint : startPoint;
-      previewPosition(value, isEndPoint);
-    },
-    [previewPosition, startPoint, endPoint],
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const throttledPreviewPosition = useCallback(
+    throttle(previewPosition, 100, { trailing: true, leading: true }),
+    [previewPosition],
   );
+
+  const handleRangeChange = useCallback(
+    (values: number[]) => {
+      const state = useScrubber.getState();
+      if (values[0] !== state.startPoint) {
+        console.log("setting start point", values[0]);
+        setStartPoint(values[0]);
+        throttledPreviewPosition(values[0], false);
+      }
+      if (values[1] !== state.endPoint) {
+        console.log("setting end point", values[1]);
+        setEndPoint(values[1]);
+        throttledPreviewPosition(values[1], true);
+      }
+    },
+    [throttledPreviewPosition],
+  );
+
+  // const handleThumbDragStart = useCallback(
+  //   (index: number) => {
+  //     // index 0 is start point, index 1 is end point
+  //     const isEndPoint = index === 1;
+  //     const value = isEndPoint ? endPoint : startPoint;
+  //     previewPosition(value, isEndPoint);
+  //   },
+  //   [previewPosition, startPoint, endPoint],
+  // );
 
   const togglePlay = useCallback(() => {
     if (isPlaying()) {
@@ -150,8 +180,8 @@ export function YouTubeLooper({
   }, [isPlaying, pauseVideo, playVideo]);
 
   const handleContinue = useCallback(() => {
-    if (step === 2) {
-      // Add to history when moving from step 2 to 3
+    if (step === 1) {
+      // Add to history when moving from step 1 to 2
       addHistory({
         name: getTitle() || "Untitled",
         videoId: currentVideoId || "",
@@ -195,7 +225,7 @@ export function YouTubeLooper({
       setStartPoint(Number(start));
       setEndPoint(Number(end));
       setSpeed(1);
-      setStep(3);
+      setStep(2);
 
       // Load the video
       loadVideo(videoId);
@@ -231,8 +261,6 @@ export function YouTubeLooper({
     destroyPlayer,
     loadVideo,
     setCurrentVideoId,
-    setStartPoint,
-    setEndPoint,
     setSpeed,
     setStep,
     isPlaying,
@@ -246,7 +274,7 @@ export function YouTubeLooper({
 
   // Add initialization effect for when video loads
   useEffect(() => {
-    if (step === 3 && currentVideoId) {
+    if (step === 2 && currentVideoId) {
       const duration = getDuration();
       if (duration > 0) {
         // Set initial position and speed
@@ -292,7 +320,7 @@ export function YouTubeLooper({
         <div id="youtube-player" />
       </div>
       {step === 0 && (
-        <div className="grid gap-2 w-full">
+        <form className="grid gap-2 w-full">
           <h2 className="text-lg font-medium">Enter YouTube Video ID</h2>
           <input
             type="text"
@@ -304,7 +332,7 @@ export function YouTubeLooper({
           <Button className="w-full" onClick={handleLoadVideo}>
             Load Video
           </Button>
-        </div>
+        </form>
       )}
 
       {currentVideoId && (
@@ -315,7 +343,6 @@ export function YouTubeLooper({
               <Slider
                 value={[startPoint, endPoint]}
                 onValueChange={handleRangeChange}
-                onThumbDragStart={handleThumbDragStart}
                 max={100}
                 step={0.1}
               />

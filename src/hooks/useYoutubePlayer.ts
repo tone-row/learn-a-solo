@@ -214,6 +214,12 @@ export function useYoutubePlayer() {
     }
   }, []);
 
+  /**
+   * Previews a specific position in the video by playing a short 1-second clip
+   * Used for previewing timestamps when setting clip start/end points
+   * @param timePercent - The position to preview as a percentage (0-100) of total video duration
+   * @param isEndPoint - If true, starts playback slightly before the selected point for better context
+   */
   const previewPosition = useCallback(
     (timePercent: number, isEndPoint: boolean) => {
       if (!isReady()) return;
@@ -231,12 +237,14 @@ export function useYoutubePlayer() {
       seekTo(previewTime);
       playVideo();
 
-      // Pause after a short preview
-      playerState.current.previewTimeoutId = window.setTimeout(() => {
-        pauseVideo();
-      }, 1000);
+      // Only pause after preview if we're previewing an end point
+      // if (isEndPoint) {
+      //   playerState.current.previewTimeoutId = window.setTimeout(() => {
+      //     pauseVideo();
+      //   }, 1000);
+      // }
     },
-    [isReady, getDuration, seekTo, playVideo, pauseVideo],
+    [isReady, getDuration, seekTo, playVideo],
   );
 
   return {
