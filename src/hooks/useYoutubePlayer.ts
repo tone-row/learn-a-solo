@@ -78,7 +78,10 @@ function initializePlayer(videoId: string) {
         });
 
         // Call the callback if one is set
-        useYouTubePlayerStore.getState().onReadyCallback?.();
+        setTimeout(() => {
+          console.log("onReadyCallback fired");
+          useYouTubePlayerStore.getState().onReadyCallback?.();
+        }, 1000);
       },
       onStateChange: (event: YT.OnStateChangeEvent) => {
         console.log("Player state changed:", event.data);
@@ -99,13 +102,21 @@ export function getCurrentTime() {
 export function loadVideo(videoId: string, onReady?: () => void) {
   const playerStore = useYouTubePlayerStore.getState();
   // Store callback before destroying player
-  playerStore.onReadyCallback = () => {
-    // Get duration immediately after player is ready
-    const duration = playerStore.player?.getDuration() || 0;
-    if (duration > 0) {
-      onReady?.();
-    }
-  };
+  // playerStore.onReadyCallback = () => {
+  //   console.log("onReadyCallback fired");
+  //   const player = useYouTubePlayerStore.getState().player;
+  //   console.log("player is ready", isReady());
+  //   // Get duration immediately after player is ready
+  //   // const duration = player?.getDuration();
+  //   // console.log("duration", duration);
+  //   // if (duration > 0) {
+  //   //   onReady?.();
+  //   // }
+  // };
+
+  if (onReady) {
+    useYouTubePlayerStore.setState({ onReadyCallback: onReady });
+  }
 
   if (playerStore.player) {
     playerStore.player.destroy();
@@ -127,7 +138,7 @@ export function loadVideo(videoId: string, onReady?: () => void) {
 
 export function isReady() {
   const playerStore = useYouTubePlayerStore.getState();
-  // Check both that the player exists AND that onReady has fired
+
   return (
     playerStore.isReady &&
     playerStore.player !== null &&
@@ -238,6 +249,7 @@ export function useYoutubePlayer() {
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
     window.onYouTubeIframeAPIReady = () => {
+      console.log("onYouTubeIframeAPIReady fired");
       useYouTubePlayerStore.setState({ isReady: true });
     };
 

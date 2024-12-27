@@ -18,6 +18,7 @@ import {
 import { throttle } from "lodash";
 import { useHistoryStore } from "@/hooks/useHistoryStore";
 import { setEndPoint, setStartPoint, useScrubber } from "@/hooks/useScrubber";
+import { useRouter } from "next/navigation";
 
 export function YouTubeLooper({
   v,
@@ -193,6 +194,8 @@ export function YouTubeLooper({
     setStep((prev) => prev + 1);
   }, [addHistory, currentVideoId, endPoint, startPoint, step]);
 
+  const router = useRouter();
+
   const handleReset = useCallback(() => {
     if (isPlaying()) {
       pauseVideo();
@@ -204,7 +207,8 @@ export function YouTubeLooper({
     setStartPoint(0);
     setEndPoint(100);
     setSpeed(1);
-  }, []);
+    router.push("/");
+  }, [router]);
 
   // Add URL parameter handling effect
   // useEffect(() => {
@@ -274,16 +278,26 @@ export function YouTubeLooper({
     }
   }, [currentVideoId, startPoint, step]);
 
-  // If we have an initial video id, load it
+  // If we have an initial video id, load it and play it
   useEffect(() => {
-    if (v) {
-      loadVideo(v);
+    if (v && start && end) {
+      setStartPoint(Number(start));
+      setEndPoint(Number(end));
+      loadVideo(v, () => {
+        console.log("loaded video", v);
+        const duration = getDuration();
+        const startTime = (Number(start) / 100) * duration;
+        seekTo(startTime);
+        setPlaybackRate(1);
+        // playVideo();
+        // move into step 2
+        // setStep(2);
+      });
     }
-  }, [v]);
+  }, [v, start, end]);
 
   const handleLoadVideo = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    debugger;
     loadVideo(inputVideoId, () => {
       // Reset points to full duration when video loads
       setStartPoint(0);
@@ -294,83 +308,80 @@ export function YouTubeLooper({
   };
 
   return (
-    <div className="py-12 grid justify-center content-center gap-2">
-      {currentVideoId && getTitle() && (
-        <h1 className="text-xl font-semibold text-center">{getTitle()}</h1>
-      )}
-      <div className="relative aspect-video bg-gray-400 rounded-lg">
-        <div id="youtube-player" />
-      </div>
-      {step === 0 && (
-        <form className="grid gap-2 w-full" onSubmit={handleLoadVideo}>
-          <h2 className="text-lg font-medium">Enter YouTube Video ID</h2>
-          <input
-            type="text"
-            className="w-full p-2 border rounded"
-            placeholder="Enter YouTube Video ID"
-            value={inputVideoId}
-            onChange={(e) => setInputVideoId(e.target.value)}
-          />
-          <Button className="w-full" type="submit">
-            Load Video
-          </Button>
-        </form>
-      )}
+    <div className="grid grid-rows-[auto_minmax(0,1fr)]">
+      <header className="grid gap-2 p-4">
+        <Button variant="outline" className="w-full" onClick={handleReset}>
+          Reset Player
+        </Button>
+      </header>
+      <div className="py-12 grid justify-center content-center gap-2">
+        {currentVideoId && getTitle() && (
+          <h1 className="text-xl font-semibold text-center">{getTitle()}</h1>
+        )}
+        <div className="relative aspect-video bg-gray-400 rounded-lg">
+          <div id="youtube-player" />
+        </div>
+        {step === 0 && (
+          <form className="grid gap-2 w-full" onSubmit={handleLoadVideo}>
+            <h2 className="text-lg font-medium">Enter YouTube Video ID</h2>
+            <input
+              type="text"
+              className="w-full p-2 border rounded"
+              placeholder="Enter YouTube Video ID"
+              value={inputVideoId}
+              onChange={(e) => setInputVideoId(e.target.value)}
+            />
+            <Button className="w-full" type="submit">
+              Load Video
+            </Button>
+          </form>
+        )}
 
-      {currentVideoId && (
-        <>
-          {step === 1 && (
-            <div className="grid gap-4">
-              <p className="text-lg font-medium">Set Loop Points</p>
-              <Slider
-                value={[startPoint, endPoint]}
-                onValueChange={handleRangeChange}
-                max={100}
-                step={0.1}
-              />
-              <Button onClick={handleContinue}>Continue</Button>
-            </div>
-          )}
+        {currentVideoId && (
+          <>
+            {step === 1 && (
+              <div className="grid gap-4">
+                <p className="text-lg font-medium">Set Loop Points</p>
+                <Slider
+                  value={[startPoint, endPoint]}
+                  onValueChange={handleRangeChange}
+                  max={100}
+                  step={0.1}
+                />
+                <Button onClick={handleContinue}>Continue</Button>
+              </div>
+            )}
 
-          {step === 2 && (
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between">
-                <Button variant="ghost" size="icon" onClick={togglePlay}>
-                  {isPlaying() ? (
-                    <PauseCircle size={24} />
-                  ) : (
-                    <PlayCircle size={24} />
-                  )}
-                </Button>
+            {step === 2 && (
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <Button variant="ghost" size="icon" onClick={togglePlay}>
+                    {isPlaying() ? (
+                      <PauseCircle size={24} />
+                    ) : (
+                      <PlayCircle size={24} />
+                    )}
+                  </Button>
 
-                <div className="flex items-center space-x-2">
-                  <Rewind size={20} />
-                  <span className="text-2xl font-bold">
-                    {speed.toFixed(3)}x
-                  </span>
-                  <FastForward size={20} />
+                  <div className="flex items-center space-x-2">
+                    <Rewind size={20} />
+                    <span className="text-2xl font-bold">
+                      {speed.toFixed(3)}x
+                    </span>
+                    <FastForward size={20} />
+                  </div>
+                </div>
+
+                <div className="grid gap-1 text-sm text-gray-500 text-center">
+                  <p>Space - Play/Pause</p>
+                  <p>Up/Down Arrows - Adjust Speed</p>
+                  <p>R - Restart Loop</p>
                 </div>
               </div>
-
-              <div className="grid gap-1 text-sm text-gray-500 text-center">
-                <p>Space - Play/Pause</p>
-                <p>Up/Down Arrows - Adjust Speed</p>
-                <p>R - Restart Loop</p>
-              </div>
-
-              <div className="border-t pt-4">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleReset}
-                >
-                  Reset Player
-                </Button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
