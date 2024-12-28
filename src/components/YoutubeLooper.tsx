@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { PlayCircle, PauseCircle, FastForward, Rewind } from "lucide-react";
+import { FastForward, Rewind, Undo2, Pause, Play } from "lucide-react";
 import {
   getDuration,
   getTitle,
@@ -23,6 +23,8 @@ import { setEndPoint, setStartPoint, useScrubber } from "@/hooks/useScrubber";
 import { useRouter } from "next/navigation";
 import getYoutubeId from "get-youtube-id";
 import { Timer } from "./Timer";
+import { cn } from "@/lib/utils";
+import { Input } from "./ui/input";
 
 type AppState = "no-video" | "no-looppoints" | "from-url" | "ready";
 
@@ -40,9 +42,8 @@ export function YouTubeLooper({
   const [step, setStep] = useState<AppState>(fromUrl ? "from-url" : "no-video");
   const startPoint = useScrubber((state) => state.startPoint);
   const endPoint = useScrubber((state) => state.endPoint);
-  const [speed, setSpeed] = useState(1);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
-  const isVideoPlaying = useYouTubePlayerStore((state) => state.isPlaying);
+  const [speed, setSpeed] = useState(1);
 
   const addHistory = useHistoryStore((state) => state.addHistory);
 
@@ -95,36 +96,7 @@ export function YouTubeLooper({
     };
   }, [startPoint, step, throttledSpeedUpdate]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const throttledPreviewPosition = useCallback(
-    throttle(previewPosition, 100, { trailing: true, leading: true }),
-    [],
-  );
-
-  const handleRangeChange = useCallback(
-    (values: number[]) => {
-      const state = useScrubber.getState();
-      if (values[0] !== state.startPoint) {
-        console.log("setting start point", values[0]);
-        setStartPoint(values[0]);
-        throttledPreviewPosition(values[0], false);
-      }
-      if (values[1] !== state.endPoint) {
-        console.log("setting end point", values[1]);
-        setEndPoint(values[1]);
-        throttledPreviewPosition(values[1], true);
-      }
-    },
-    [throttledPreviewPosition],
-  );
-
-  const togglePlay = useCallback(() => {
-    if (isPlaying()) {
-      pauseVideo();
-    } else {
-      playVideo();
-    }
-  }, []);
+  const isVideoPlaying = useYouTubePlayerStore((state) => state.isPlaying);
 
   const afterSettingLooppoints = useCallback(() => {
     if (step !== "no-looppoints") return;
@@ -195,92 +167,197 @@ export function YouTubeLooper({
   };
 
   return (
-    <div className="grid grid-rows-[auto_minmax(0,1fr)]">
-      <header className="flex gap-2 p-4 justify-between w-full items-center">
-        <h1 className="text-xl font-bold">YouTube Soloist</h1>
-        <div className="flex gap-2">
-          <span>Looper</span>
-          <span>About</span>
-          <span>History</span>
-        </div>
-        <Button variant="outline" onClick={handleReset}>
-          Select New Video
+    <div className="grid p-6 max-w-[1460px] mx-auto md:p-10">
+      <div className="flex justify-between items-start">
+        <p className="text-balance text-lg max-w-lg">
+          Use <strong>Learn a Solo</strong> to practice any solo you find on
+          youtube with easy looping and speed controls.
+        </p>
+        <Button onClick={handleReset}>
+          <Undo2 size={20} />
+          Enter a Video URL
         </Button>
-      </header>
-      <div className="py-12 grid justify-center content-center gap-2">
-        {currentVideoId && getTitle() && (
-          <h1 className="text-xl font-semibold text-center">{getTitle()}</h1>
-        )}
-        <div className="relative aspect-video bg-gray-400 rounded-lg">
-          <div id="youtube-player" />
+      </div>
+
+      {/* {currentVideoId && getTitle() && (
+        <h1 className="text-xl font-semibold text-center">{getTitle()}</h1>
+      )} */}
+
+      {step === "no-video" && (
+        <NoVideo
+          handleLoadVideo={handleLoadVideo}
+          inputVideoId={inputVideoId}
+          setInputVideoId={setInputVideoId}
+        />
+      )}
+
+      {step === "no-looppoints" && (
+        <NoLoopPoints afterSettingLooppoints={afterSettingLooppoints} />
+      )}
+
+      <div
+        className={cn("relative bg-gray-400 rounded-lg my-12 mx-auto", {
+          "aspect-video max-w-[640px]": step !== "no-video",
+        })}
+      >
+        <div id="youtube-player" />
+      </div>
+
+      {step === "ready" && (
+        <ReadyToLoop speed={speed} isVideoPlaying={isVideoPlaying} />
+      )}
+
+      {step === "from-url" && <FromURL afterLoadFromUrl={afterLoadFromUrl} />}
+    </div>
+  );
+}
+
+function BigInstruction({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-3xl text-balance text-center leading-tight">
+      {children}
+    </h2>
+  );
+}
+
+function NoLoopPoints({
+  afterSettingLooppoints,
+}: {
+  afterSettingLooppoints: () => void;
+}) {
+  const startPoint = useScrubber((state) => state.startPoint);
+  const endPoint = useScrubber((state) => state.endPoint);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const throttledPreviewPosition = useCallback(
+    throttle(previewPosition, 100, { trailing: true, leading: true }),
+    [],
+  );
+  const handleRangeChange = useCallback(
+    (values: number[]) => {
+      const state = useScrubber.getState();
+      if (values[0] !== state.startPoint) {
+        console.log("setting start point", values[0]);
+        setStartPoint(values[0]);
+        throttledPreviewPosition(values[0], false);
+      }
+      if (values[1] !== state.endPoint) {
+        console.log("setting end point", values[1]);
+        setEndPoint(values[1]);
+        throttledPreviewPosition(values[1], true);
+      }
+    },
+    [throttledPreviewPosition],
+  );
+  return (
+    <div className="grid gap-6 w-full max-w-2xl mx-auto mt-12">
+      <BigInstruction>
+        Drag the slider to set the start and end points of the loop you want to
+        practice. Then click continue.
+      </BigInstruction>
+      <Slider
+        value={[startPoint, endPoint]}
+        onValueChange={handleRangeChange}
+        max={100}
+        step={0.1}
+      />
+      <Button onClick={afterSettingLooppoints}>Continue</Button>
+    </div>
+  );
+}
+
+function ReadyToLoop({
+  speed,
+  isVideoPlaying,
+}: {
+  speed: number;
+  isVideoPlaying: boolean;
+}) {
+  return (
+    <div className="grid gap-4">
+      <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center space-x-2">
+          <Rewind size={20} />
+          <span className="text-2xl font-bold">{speed.toFixed(3)}x</span>
+          <FastForward size={20} />
         </div>
-        {step === "no-video" && (
-          <form className="grid gap-2 w-full" onSubmit={handleLoadVideo}>
-            <h2 className="text-lg font-medium">
-              Copy and paste a YouTube URL
-            </h2>
-            <input
-              type="text"
-              className="w-full p-2 border rounded"
-              placeholder="Enter YouTube Video ID"
-              value={inputVideoId}
-              onChange={(e) => setInputVideoId(e.target.value)}
-            />
-            <Button className="w-full" type="submit">
-              Load Video
-            </Button>
-          </form>
-        )}
+        <Timer />
+      </div>
 
-        {step === "no-looppoints" && (
-          <div className="grid gap-4">
-            <p className="text-lg font-medium">Set Loop Points</p>
-            <Slider
-              value={[startPoint, endPoint]}
-              onValueChange={handleRangeChange}
-              max={100}
-              step={0.1}
-            />
-            <Button onClick={afterSettingLooppoints}>Continue</Button>
-          </div>
-        )}
-
-        {step === "ready" && (
-          <div className="grid gap-4" key={currentVideoId}>
-            <div className="flex items-center justify-between">
-              <button
-                className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200"
-                onClick={togglePlay}
-              >
-                {isVideoPlaying ? (
-                  <PauseCircle size={24} />
-                ) : (
-                  <PlayCircle size={24} />
-                )}
-              </button>
-
-              <div className="flex items-center space-x-2">
-                <Rewind size={20} />
-                <span className="text-2xl font-bold">{speed.toFixed(3)}x</span>
-                <FastForward size={20} />
-              </div>
-            </div>
-
-            <div className="grid gap-1 text-sm text-gray-500 text-center">
-              <p>Space - Play/Pause</p>
-              <p>Up/Down Arrows - Adjust Speed</p>
-              <p>R - Restart Loop</p>
-            </div>
-            <Timer />
-          </div>
-        )}
-
-        {step === "from-url" && (
-          <div className="grid gap-4">
-            <Button onClick={afterLoadFromUrl}>Start Looping</Button>
-          </div>
-        )}
+      <div className="flex gap-2 flex-wrap items-center justify-center">
+        <BigButton icon={<KeyboardKey>Space</KeyboardKey>}>
+          {isVideoPlaying ? (
+            <>
+              <Pause size={24} />
+              Pause
+            </>
+          ) : (
+            <>
+              <Play size={24} />
+              Play
+            </>
+          )}
+        </BigButton>
+        <BigButton icon={<KeyboardKey>↑/↓</KeyboardKey>}>
+          Adjust Speed
+        </BigButton>
+        <BigButton icon={<KeyboardKey>R</KeyboardKey>}>Restart Loop</BigButton>
       </div>
     </div>
   );
+}
+
+function NoVideo({
+  handleLoadVideo,
+  inputVideoId,
+  setInputVideoId,
+}: {
+  handleLoadVideo: (e: React.FormEvent<HTMLFormElement>) => void;
+  inputVideoId: string;
+  setInputVideoId: (value: string) => void;
+}) {
+  return (
+    <form
+      className="grid gap-6 w-full max-w-xl mx-auto mt-12"
+      onSubmit={handleLoadVideo}
+    >
+      <BigInstruction>Paste a video URL in the box below</BigInstruction>
+      <Input
+        type="text"
+        placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        value={inputVideoId}
+        onChange={(e) => setInputVideoId(e.target.value)}
+        className="w-full bg-neutral-100 border-2 border-dashed border-black p-4"
+      />
+      <Button className="w-full" type="submit">
+        Load Video
+      </Button>
+    </form>
+  );
+}
+
+function FromURL({ afterLoadFromUrl }: { afterLoadFromUrl: () => void }) {
+  return (
+    <div className="grid gap-4">
+      <Button onClick={afterLoadFromUrl}>Start Looping</Button>
+    </div>
+  );
+}
+
+function BigButton({
+  children,
+  icon,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+}) {
+  return (
+    <button className="border-2 border-black rounded-xl flex items-center p-4 text-2xl font-semibold text-black gap-2">
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+function KeyboardKey({ children }: { children: React.ReactNode }) {
+  return <kbd className="rounded-md bg-neutral-100 px-2 py-1">{children}</kbd>;
 }
