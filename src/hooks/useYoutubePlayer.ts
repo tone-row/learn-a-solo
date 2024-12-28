@@ -77,11 +77,22 @@ function initializePlayer(videoId: string) {
           videoUrl: event.target.getVideoUrl(),
         });
 
-        // Call the callback if one is set
-        setTimeout(() => {
-          console.log("onReadyCallback fired");
-          useYouTubePlayerStore.getState().onReadyCallback?.();
-        }, 1000);
+        // Maybe you have to start playing the video for it to ever have a duration
+        event.target.playVideo();
+
+        // Only proceed if we have a callback
+        // const callback = useYouTubePlayerStore.getState().onReadyCallback;
+        // if (callback) {
+        //   console.log("Callback found, checking if player is ready");
+        //   const checkReady = setInterval(() => {
+        //     console.log("Checking if player is ready");
+        //     if (isReady()) {
+        //       clearInterval(checkReady);
+        //       console.log("Player fully ready, executing callback");
+        //       callback();
+        //     }
+        //   }, 100);
+        // }
       },
       onStateChange: (event: YT.OnStateChangeEvent) => {
         console.log("Player state changed:", event.data);
@@ -100,6 +111,7 @@ export function getCurrentTime() {
 }
 
 export function loadVideo(videoId: string, onReady?: () => void) {
+  console.log("loadVideo", videoId, onReady);
   const playerStore = useYouTubePlayerStore.getState();
   // Store callback before destroying player
   // playerStore.onReadyCallback = () => {

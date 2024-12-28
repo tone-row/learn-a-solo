@@ -12,8 +12,6 @@ export default function Home() {
   const start = params.get("start");
   const end = params.get("end");
 
-  console.log(v, start, end);
-
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {

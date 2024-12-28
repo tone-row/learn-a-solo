@@ -9,6 +9,7 @@ type HistoryStore = {
     endPoint: number;
   }[];
   addHistory: (history: HistoryStore["history"][number]) => void;
+  deleteHistory: (videoId: string) => void;
 };
 
 export const useHistoryStore = create<HistoryStore>()(
@@ -32,6 +33,11 @@ export const useHistoryStore = create<HistoryStore>()(
 
           return { history: [newHistory, ...updatedHistory] };
         });
+      },
+      deleteHistory: (videoId) => {
+        set((state) => ({
+          history: state.history.filter((h) => h.videoId !== videoId),
+        }));
       },
     }),
     {

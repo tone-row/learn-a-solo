@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PlayCircle, PauseCircle, FastForward, Rewind } from "lucide-react";
@@ -14,11 +14,14 @@ import {
   seekTo,
   setPlaybackRate,
   useYoutubePlayer,
+  useYouTubePlayerStore,
 } from "@/hooks/useYoutubePlayer";
 import { throttle } from "lodash";
 import { useHistoryStore } from "@/hooks/useHistoryStore";
 import { setEndPoint, setStartPoint, useScrubber } from "@/hooks/useScrubber";
 import { useRouter } from "next/navigation";
+
+type AppState = "no-video" | "no-looppoints" | "from-url" | "ready";
 
 export function YouTubeLooper({
   v,
@@ -29,13 +32,14 @@ export function YouTubeLooper({
   start: string | null;
   end: string | null;
 }) {
-  console.log("YouTubeLooper", v, start, end);
-  const [inputVideoId, setInputVideoId] = useState(v ?? "-iVgONy8kMY");
-  const [step, setStep] = useState(0);
+  const fromUrl = v && start && end;
+  const [inputVideoId, setInputVideoId] = useState("");
+  const [step, setStep] = useState<AppState>(fromUrl ? "from-url" : "no-video");
   const startPoint = useScrubber((state) => state.startPoint);
   const endPoint = useScrubber((state) => state.endPoint);
   const [speed, setSpeed] = useState(1);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+  const isVideoPlaying = useYouTubePlayerStore((state) => state.isPlaying);
 
   const addHistory = useHistoryStore((state) => state.addHistory);
 
@@ -63,7 +67,7 @@ export function YouTubeLooper({
 
   // Combined keyboard controls effect
   useEffect(() => {
-    if (step !== 2) return;
+    if (step !== "ready") return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -124,22 +128,6 @@ export function YouTubeLooper({
   //   seekTo,
   // ]);
 
-  // Add this effect alongside the other keyboard effects
-  useEffect(() => {
-    if (step !== 3) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "r") return;
-
-      const duration = getDuration();
-      const startTime = (startPoint / 100) * duration;
-      seekTo(startTime);
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [startPoint, step]);
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const throttledPreviewPosition = useCallback(
     throttle(previewPosition, 100, { trailing: true, leading: true }),
@@ -181,8 +169,8 @@ export function YouTubeLooper({
     }
   }, []);
 
-  const handleContinue = useCallback(() => {
-    if (step === 1) {
+  const afterSettingLooppoints = useCallback(() => {
+    if (step === "no-looppoints") {
       // Add to history when moving from step 1 to 2
       addHistory({
         name: getTitle() || "Untitled",
@@ -191,7 +179,7 @@ export function YouTubeLooper({
         endPoint,
       });
     }
-    setStep((prev) => prev + 1);
+    setStep("ready");
   }, [addHistory, currentVideoId, endPoint, startPoint, step]);
 
   const router = useRouter();
@@ -203,7 +191,7 @@ export function YouTubeLooper({
     resetPlayerState();
     setInputVideoId("");
     setCurrentVideoId(null);
-    setStep(0);
+    setStep("no-video");
     setStartPoint(0);
     setEndPoint(100);
     setSpeed(1);
@@ -265,33 +253,45 @@ export function YouTubeLooper({
   // }, []); // Empty dependency array as this should only run once on mount
 
   // Add initialization effect for when video loads
-  useEffect(() => {
-    if (step === 2 && currentVideoId) {
-      const duration = getDuration();
-      if (duration > 0) {
-        // Set initial position and speed
-        const startTime = (startPoint / 100) * duration;
-        seekTo(startTime);
-        setPlaybackRate(1);
-        playVideo();
-      }
-    }
-  }, [currentVideoId, startPoint, step]);
+  // useEffect(() => {
+  //   if (step === "ready" && currentVideoId) {
+  //     const duration = getDuration();
+  //     if (duration > 0) {
+  //       // Set initial position and speed
+  //       const startTime = (startPoint / 100) * duration;
+  //       seekTo(startTime);
+  //       setPlaybackRate(1);
+  //       // playVideo();
+  //     }
+  //   }
+  // }, [currentVideoId, startPoint, step]);
+
+  const afterLoadFromUrl = useCallback(() => {
+    setStep("ready");
+    // playVideo();
+    const duration = getDuration();
+    const startTime = (Number(start) / 100) * duration;
+    seekTo(startTime);
+    setPlaybackRate(1);
+    playVideo();
+  }, [start]);
 
   // If we have an initial video id, load it and play it
+  const loadedFromUrl = useRef("");
   useEffect(() => {
-    if (v && start && end) {
+    if (v && start && end && loadedFromUrl.current !== v) {
+      loadedFromUrl.current = v;
       setStartPoint(Number(start));
       setEndPoint(Number(end));
       loadVideo(v, () => {
-        console.log("loaded video", v);
-        const duration = getDuration();
-        const startTime = (Number(start) / 100) * duration;
-        seekTo(startTime);
-        setPlaybackRate(1);
+        // console.log("Loaded video", v);
+        // const duration = getDuration();
+        // const startTime = (Number(start) / 100) * duration;
+        // seekTo(startTime);
+        // setPlaybackRate(1);
         // playVideo();
         // move into step 2
-        // setStep(2);
+        // setStep("ready");
       });
     }
   }, [v, start, end]);
@@ -304,7 +304,7 @@ export function YouTubeLooper({
       setEndPoint(100);
     });
     setCurrentVideoId(inputVideoId);
-    setStep(1);
+    setStep("no-looppoints");
   };
 
   return (
@@ -321,7 +321,7 @@ export function YouTubeLooper({
         <div className="relative aspect-video bg-gray-400 rounded-lg">
           <div id="youtube-player" />
         </div>
-        {step === 0 && (
+        {step === "no-video" && (
           <form className="grid gap-2 w-full" onSubmit={handleLoadVideo}>
             <h2 className="text-lg font-medium">Enter YouTube Video ID</h2>
             <input
@@ -337,49 +337,52 @@ export function YouTubeLooper({
           </form>
         )}
 
-        {currentVideoId && (
-          <>
-            {step === 1 && (
-              <div className="grid gap-4">
-                <p className="text-lg font-medium">Set Loop Points</p>
-                <Slider
-                  value={[startPoint, endPoint]}
-                  onValueChange={handleRangeChange}
-                  max={100}
-                  step={0.1}
-                />
-                <Button onClick={handleContinue}>Continue</Button>
+        {step === "no-looppoints" && (
+          <div className="grid gap-4">
+            <p className="text-lg font-medium">Set Loop Points</p>
+            <Slider
+              value={[startPoint, endPoint]}
+              onValueChange={handleRangeChange}
+              max={100}
+              step={0.1}
+            />
+            <Button onClick={afterSettingLooppoints}>Continue</Button>
+          </div>
+        )}
+
+        {step === "ready" && (
+          <div className="grid gap-4" key={currentVideoId}>
+            <div className="flex items-center justify-between">
+              <button
+                className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200"
+                onClick={togglePlay}
+              >
+                {isVideoPlaying ? (
+                  <PauseCircle size={24} />
+                ) : (
+                  <PlayCircle size={24} />
+                )}
+              </button>
+
+              <div className="flex items-center space-x-2">
+                <Rewind size={20} />
+                <span className="text-2xl font-bold">{speed.toFixed(3)}x</span>
+                <FastForward size={20} />
               </div>
-            )}
+            </div>
 
-            {step === 2 && (
-              <div className="grid gap-4">
-                <div className="flex items-center justify-between">
-                  <Button variant="ghost" size="icon" onClick={togglePlay}>
-                    {isPlaying() ? (
-                      <PauseCircle size={24} />
-                    ) : (
-                      <PlayCircle size={24} />
-                    )}
-                  </Button>
+            <div className="grid gap-1 text-sm text-gray-500 text-center">
+              <p>Space - Play/Pause</p>
+              <p>Up/Down Arrows - Adjust Speed</p>
+              <p>R - Restart Loop</p>
+            </div>
+          </div>
+        )}
 
-                  <div className="flex items-center space-x-2">
-                    <Rewind size={20} />
-                    <span className="text-2xl font-bold">
-                      {speed.toFixed(3)}x
-                    </span>
-                    <FastForward size={20} />
-                  </div>
-                </div>
-
-                <div className="grid gap-1 text-sm text-gray-500 text-center">
-                  <p>Space - Play/Pause</p>
-                  <p>Up/Down Arrows - Adjust Speed</p>
-                  <p>R - Restart Loop</p>
-                </div>
-              </div>
-            )}
-          </>
+        {step === "from-url" && (
+          <div className="grid gap-4">
+            <Button onClick={afterLoadFromUrl}>Continue</Button>
+          </div>
         )}
       </div>
     </div>
