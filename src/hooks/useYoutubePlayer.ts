@@ -14,6 +14,7 @@ interface YouTubePlayerState {
   videoUrl: string | null;
   previewTimeoutId: number | null;
   onReadyCallback?: () => void;
+  loopPoints: { startPoint: number; endPoint: number } | null;
 }
 
 declare global {
@@ -36,6 +37,7 @@ const initialState: YouTubePlayerState = {
   videoUrl: null,
   previewTimeoutId: null,
   onReadyCallback: undefined,
+  loopPoints: null,
 };
 
 export const useYouTubePlayerStore = create<YouTubePlayerState>()(
@@ -122,18 +124,6 @@ export function getCurrentTime() {
 export function loadVideo(videoId: string, onReady?: () => void) {
   console.log("loadVideo", videoId, onReady);
   const playerStore = useYouTubePlayerStore.getState();
-  // Store callback before destroying player
-  // playerStore.onReadyCallback = () => {
-  //   console.log("onReadyCallback fired");
-  //   const player = useYouTubePlayerStore.getState().player;
-  //   console.log("player is ready", isReady());
-  //   // Get duration immediately after player is ready
-  //   // const duration = player?.getDuration();
-  //   // console.log("duration", duration);
-  //   // if (duration > 0) {
-  //   //   onReady?.();
-  //   // }
-  // };
 
   if (onReady) {
     useYouTubePlayerStore.setState({ onReadyCallback: onReady });
@@ -212,10 +202,10 @@ export function destroyPlayer() {
     useYouTubePlayerStore.setState({ player: null });
 
     // Recreate the original div
-    const container = document.getElementById("youtube-player");
-    if (container) {
-      container.innerHTML = "";
-    }
+  }
+  const container = document.getElementById("youtube-player");
+  if (container) {
+    container.innerHTML = "";
   }
 }
 
@@ -242,13 +232,6 @@ export function previewPosition(timePercent: number, isEndPoint: boolean) {
   const previewTime = isEndPoint ? Math.max(time - 1, 0) : time;
   seekTo(previewTime);
   playVideo();
-
-  // Only pause after preview if we're previewing an end point
-  // if (isEndPoint) {
-  //   playerState.current.previewTimeoutId = window.setTimeout(() => {
-  //     pauseVideo();
-  //   }, 1000);
-  // }
 }
 
 export function isPlaying() {
@@ -313,4 +296,11 @@ export function useYoutubePlayer() {
     isReady,
     previewPosition,
   };
+}
+
+/**
+ * This should receive loop points in time (seconds)
+ */
+export function setLoopPoints(startPoint: number, endPoint: number) {
+  useYouTubePlayerStore.setState({ loopPoints: { startPoint, endPoint } });
 }

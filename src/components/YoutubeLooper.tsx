@@ -12,6 +12,7 @@ import {
   previewPosition,
   resetPlayerState,
   seekTo,
+  setLoopPoints,
   setPlaybackRate,
   useYoutubePlayer,
   useYouTubePlayerStore,
@@ -94,42 +95,6 @@ export function YouTubeLooper({
     };
   }, [startPoint, step, throttledSpeedUpdate]);
 
-  // Add loop checking effect, this is how we actually force it to loop is by checking over and over and over
-  // useEffect(() => {
-  //   if (step !== 3 || !isPlaying()) {
-  //     if (loopIntervalRef.current) {
-  //       clearInterval(loopIntervalRef.current);
-  //       loopIntervalRef.current = null;
-  //     }
-  //     return;
-  //   }
-
-  //   loopIntervalRef.current = setInterval(() => {
-  //     const currentTime = getCurrentTime();
-  //     const duration = getDuration();
-  //     const startTime = (startPoint / 100) * duration;
-  //     const endTime = (endPoint / 100) * duration;
-
-  //     if (currentTime >= endTime) {
-  //       seekTo(startTime);
-  //     }
-  //   }, 100);
-
-  //   return () => {
-  //     if (loopIntervalRef.current) {
-  //       clearInterval(loopIntervalRef.current);
-  //     }
-  //   };
-  // }, [
-  //   step,
-  //   isPlaying,
-  //   startPoint,
-  //   endPoint,
-  //   getCurrentTime,
-  //   getDuration,
-  //   seekTo,
-  // ]);
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const throttledPreviewPosition = useCallback(
     throttle(previewPosition, 100, { trailing: true, leading: true }),
@@ -153,16 +118,6 @@ export function YouTubeLooper({
     [throttledPreviewPosition],
   );
 
-  // const handleThumbDragStart = useCallback(
-  //   (index: number) => {
-  //     // index 0 is start point, index 1 is end point
-  //     const isEndPoint = index === 1;
-  //     const value = isEndPoint ? endPoint : startPoint;
-  //     previewPosition(value, isEndPoint);
-  //   },
-  //   [previewPosition, startPoint, endPoint],
-  // );
-
   const togglePlay = useCallback(() => {
     if (isPlaying()) {
       pauseVideo();
@@ -172,15 +127,21 @@ export function YouTubeLooper({
   }, []);
 
   const afterSettingLooppoints = useCallback(() => {
-    if (step === "no-looppoints") {
-      // Add to history when moving from step 1 to 2
-      addHistory({
-        name: getTitle() || "Untitled",
-        videoId: currentVideoId || "",
-        startPoint,
-        endPoint,
-      });
-    }
+    if (step !== "no-looppoints") return;
+    const duration = getDuration();
+    // Convert percentages to seconds
+    const startTime = (startPoint / 100) * duration;
+    const endTime = (endPoint / 100) * duration;
+
+    setLoopPoints(startTime, endTime);
+
+    addHistory({
+      name: getTitle() || "Untitled",
+      videoId: currentVideoId || "",
+      startPoint: startTime,
+      endPoint: endTime,
+    });
+
     setStep("ready");
   }, [addHistory, currentVideoId, endPoint, startPoint, step]);
 
@@ -200,83 +161,14 @@ export function YouTubeLooper({
     router.push("/");
   }, [router]);
 
-  // Add URL parameter handling effect
-  // useEffect(() => {
-  //   const params = new URLSearchParams(window.location.search);
-  //   const videoId = params.get("v");
-  //   const start = params.get("start");
-  //   const end = params.get("end");
-
-  //   if (videoId && start && end) {
-  //     // Reset any existing state
-  //     if (isPlaying()) {
-  //       pauseVideo();
-  //     }
-  //     destroyPlayer();
-
-  //     // Set up new state
-  //     setInputVideoId(videoId);
-  //     setCurrentVideoId(videoId);
-  //     setStartPoint(Number(start));
-  //     setEndPoint(Number(end));
-  //     setSpeed(1);
-  //     setStep(2);
-
-  //     // Load the video
-  //     loadVideo(videoId);
-
-  //     // Wait for player to be fully ready
-  //     let attempts = 0;
-  //     const maxAttempts = 50; // 5 seconds maximum wait
-
-  //     const checkPlayerReady = setInterval(() => {
-  //       attempts++;
-  //       if (isReady()) {
-  //         const duration = getDuration();
-  //         if (duration > 0) {
-  //           const startTime = (Number(start) / 100) * duration;
-  //           seekTo(startTime);
-  //           setPlaybackRate(1);
-  //           playVideo();
-  //           clearInterval(checkPlayerReady);
-  //           window.history.replaceState({}, "", "/");
-  //         }
-  //       }
-
-  //       // Give up after max attempts
-  //       if (attempts >= maxAttempts) {
-  //         console.warn("Player failed to initialize after 5 seconds");
-  //         clearInterval(checkPlayerReady);
-  //       }
-  //     }, 100);
-
-  //     return () => clearInterval(checkPlayerReady);
-  //   }
-  // }, []); // Empty dependency array as this should only run once on mount
-
-  // Add initialization effect for when video loads
-  // useEffect(() => {
-  //   if (step === "ready" && currentVideoId) {
-  //     const duration = getDuration();
-  //     if (duration > 0) {
-  //       // Set initial position and speed
-  //       const startTime = (startPoint / 100) * duration;
-  //       seekTo(startTime);
-  //       setPlaybackRate(1);
-  //       // playVideo();
-  //     }
-  //   }
-  // }, [currentVideoId, startPoint, step]);
-
   const afterLoadFromUrl = useCallback(() => {
-    setStep("ready");
-    // playVideo();
-    const duration = getDuration();
-    const startTime = (Number(start) / 100) * duration;
-    seekTo(startTime);
+    // start and end are already in seconds from the URL
+    setLoopPoints(Number(start), Number(end));
+    seekTo(Number(start));
     setPlaybackRate(1);
     playVideo();
-  }, [start]);
+    setStep("ready");
+  }, [start, end]);
 
   // If we have an initial video id, load it and play it
   const loadedFromUrl = useRef("");
@@ -304,7 +196,13 @@ export function YouTubeLooper({
 
   return (
     <div className="grid grid-rows-[auto_minmax(0,1fr)]">
-      <header className="flex gap-2 p-4 justify-items-end w-full">
+      <header className="flex gap-2 p-4 justify-between w-full items-center">
+        <h1 className="text-xl font-bold">YouTube Soloist</h1>
+        <div className="flex gap-2">
+          <span>Looper</span>
+          <span>About</span>
+          <span>History</span>
+        </div>
         <Button variant="outline" onClick={handleReset}>
           Select New Video
         </Button>
