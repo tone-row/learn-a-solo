@@ -20,6 +20,7 @@ import { throttle } from "lodash";
 import { useHistoryStore } from "@/hooks/useHistoryStore";
 import { setEndPoint, setStartPoint, useScrubber } from "@/hooks/useScrubber";
 import { useRouter } from "next/navigation";
+import getYoutubeId from "get-youtube-id";
 
 type AppState = "no-video" | "no-looppoints" | "from-url" | "ready";
 
@@ -283,35 +284,28 @@ export function YouTubeLooper({
       loadedFromUrl.current = v;
       setStartPoint(Number(start));
       setEndPoint(Number(end));
-      loadVideo(v, () => {
-        // console.log("Loaded video", v);
-        // const duration = getDuration();
-        // const startTime = (Number(start) / 100) * duration;
-        // seekTo(startTime);
-        // setPlaybackRate(1);
-        // playVideo();
-        // move into step 2
-        // setStep("ready");
-      });
+      loadVideo(v);
     }
   }, [v, start, end]);
 
   const handleLoadVideo = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    loadVideo(inputVideoId, () => {
+    const id = getYoutubeId(inputVideoId);
+    if (!id) return;
+    loadVideo(id, () => {
       // Reset points to full duration when video loads
       setStartPoint(0);
       setEndPoint(100);
     });
-    setCurrentVideoId(inputVideoId);
+    setCurrentVideoId(id);
     setStep("no-looppoints");
   };
 
   return (
     <div className="grid grid-rows-[auto_minmax(0,1fr)]">
-      <header className="grid gap-2 p-4">
-        <Button variant="outline" className="w-full" onClick={handleReset}>
-          Reset Player
+      <header className="flex gap-2 p-4 justify-items-end w-full">
+        <Button variant="outline" onClick={handleReset}>
+          Select New Video
         </Button>
       </header>
       <div className="py-12 grid justify-center content-center gap-2">
@@ -323,7 +317,9 @@ export function YouTubeLooper({
         </div>
         {step === "no-video" && (
           <form className="grid gap-2 w-full" onSubmit={handleLoadVideo}>
-            <h2 className="text-lg font-medium">Enter YouTube Video ID</h2>
+            <h2 className="text-lg font-medium">
+              Copy and paste a YouTube URL
+            </h2>
             <input
               type="text"
               className="w-full p-2 border rounded"
