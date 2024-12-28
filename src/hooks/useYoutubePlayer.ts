@@ -77,9 +77,6 @@ function initializePlayer(videoId: string) {
           videoUrl: event.target.getVideoUrl(),
         });
 
-        // Maybe you have to start playing the video for it to ever have a duration
-        event.target.playVideo();
-
         // Only proceed if we have a callback
         // const callback = useYouTubePlayerStore.getState().onReadyCallback;
         // if (callback) {

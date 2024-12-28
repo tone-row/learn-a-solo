@@ -381,7 +381,7 @@ export function YouTubeLooper({
 
         {step === "from-url" && (
           <div className="grid gap-4">
-            <Button onClick={afterLoadFromUrl}>Continue</Button>
+            <Button onClick={afterLoadFromUrl}>Start Looping</Button>
           </div>
         )}
       </div>
