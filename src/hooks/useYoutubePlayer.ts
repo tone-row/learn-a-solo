@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { create } from "zustand";
+import { useTimingStore } from "./useTimingStore";
 
 interface YouTubePlayerState {
   videoId: string | null;
@@ -19,6 +20,7 @@ declare global {
   interface Window {
     onYouTubeIframeAPIReady: (() => void) | null;
     YT: typeof YT;
+    _youtubeTimeInterval: number | null;
   }
 }
 
@@ -93,8 +95,18 @@ function initializePlayer(videoId: string) {
       },
       onStateChange: (event: YT.OnStateChangeEvent) => {
         console.log("Player state changed:", event.data);
+        const isNowPlaying = event.data === YT.PlayerState.PLAYING;
+
+        if (isNowPlaying) {
+          useTimingStore
+            .getState()
+            .startTimeTracking(() => event.target.getCurrentTime());
+        } else {
+          useTimingStore.getState().stopTimeTracking();
+        }
+
         useYouTubePlayerStore.setState({
-          isPlaying: event.data === YT.PlayerState.PLAYING,
+          isPlaying: isNowPlaying,
         });
       },
     },

@@ -21,6 +21,7 @@ import { useHistoryStore } from "@/hooks/useHistoryStore";
 import { setEndPoint, setStartPoint, useScrubber } from "@/hooks/useScrubber";
 import { useRouter } from "next/navigation";
 import getYoutubeId from "get-youtube-id";
+import { Timer } from "./Timer";
 
 type AppState = "no-video" | "no-looppoints" | "from-url" | "ready";
 
@@ -372,6 +373,7 @@ export function YouTubeLooper({
               <p>Up/Down Arrows - Adjust Speed</p>
               <p>R - Restart Loop</p>
             </div>
+            <Timer />
           </div>
         )}
 
