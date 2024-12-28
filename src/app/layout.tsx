@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Pathway_Extreme } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { Suspense } from "react";
 
 const pathwayExtreme = Pathway_Extreme({
   subsets: ["latin"],
@@ -22,7 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn(pathwayExtreme.variable, "antialiased")}>
-      <body>{children}</body>
+      <body>
+        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+      </body>
     </html>
   );
 }
