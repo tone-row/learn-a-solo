@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { FastForward, Rewind, Undo2, Pause, Play } from "lucide-react";
+import { Undo2, Pause, Play, Gauge } from "lucide-react";
 import {
   getDuration,
   getTitle,
@@ -81,9 +81,14 @@ export function YouTubeLooper({
           throttledSpeedUpdate(e.key === "ArrowUp");
           break;
         case "r":
-          const duration = getDuration();
-          const startTime = (startPoint / 100) * duration;
-          seekTo(startTime);
+          const loopPoints = useYouTubePlayerStore.getState().loopPoints;
+          if (loopPoints) {
+            seekTo(loopPoints.startPoint);
+          }
+          break;
+        case "0":
+          setSpeed(1);
+          setPlaybackRate(1);
           break;
       }
     };
@@ -196,9 +201,12 @@ export function YouTubeLooper({
       )}
 
       <div
-        className={cn("relative bg-gray-400 rounded-lg my-12 mx-auto", {
-          "aspect-video max-w-[640px]": step !== "no-video",
-        })}
+        className={cn(
+          "relative bg-gray-400 rounded-lg my-12 mx-auto pointer-events-none",
+          {
+            "aspect-video max-w-[640px]": step !== "no-video",
+          },
+        )}
       >
         <div id="youtube-player" />
       </div>
@@ -274,33 +282,40 @@ function ReadyToLoop({
 }) {
   return (
     <div className="grid gap-4">
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-between gap-4 max-w-xl w-full mx-auto">
         <div className="flex items-center space-x-2">
-          <Rewind size={20} />
-          <span className="text-2xl font-bold">{speed.toFixed(3)}x</span>
-          <FastForward size={20} />
+          <Gauge size={20} />
+          <span className="text-2xl font-bold tabular-nums">
+            {(speed * 100).toFixed(1).padStart(5, "0")}
+          </span>
         </div>
         <Timer />
       </div>
 
-      <div className="flex gap-2 flex-wrap items-center justify-center">
-        <BigButton icon={<KeyboardKey>Space</KeyboardKey>}>
-          {isVideoPlaying ? (
-            <>
-              <Pause size={24} />
-              Pause
-            </>
-          ) : (
-            <>
-              <Play size={24} />
-              Play
-            </>
-          )}
-        </BigButton>
-        <BigButton icon={<KeyboardKey>↑/↓</KeyboardKey>}>
-          Adjust Speed
-        </BigButton>
-        <BigButton icon={<KeyboardKey>R</KeyboardKey>}>Restart Loop</BigButton>
+      <div className="grid gap-1 justify-center">
+        <h4 className="uppercase opacity-50">Keyboard Shortcuts</h4>
+        <div className="flex gap-2 flex-wrap items-center justify-center">
+          <BigButton icon={<KeyboardKey>Space</KeyboardKey>}>
+            {isVideoPlaying ? (
+              <>
+                <Pause size={24} />
+                Pause
+              </>
+            ) : (
+              <>
+                <Play size={24} />
+                Play
+              </>
+            )}
+          </BigButton>
+          <BigButton icon={<KeyboardKey>↑/↓</KeyboardKey>}>
+            Adjust Speed
+          </BigButton>
+          <BigButton icon={<KeyboardKey>0</KeyboardKey>}>Reset Speed</BigButton>
+          <BigButton icon={<KeyboardKey>R</KeyboardKey>}>
+            Restart Loop
+          </BigButton>
+        </div>
       </div>
     </div>
   );
