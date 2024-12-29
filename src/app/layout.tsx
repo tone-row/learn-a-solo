@@ -4,6 +4,7 @@ import { Pathway_Extreme } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
 import { seo } from "@/lib/constants";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const pathwayExtreme = Pathway_Extreme({
   subsets: ["latin"],
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body>
         <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
       </body>
+      <GoogleAnalytics gaId="G-EL1P5WMP4R" />
     </html>
   );
 }
