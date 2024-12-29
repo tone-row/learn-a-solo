@@ -16,6 +16,8 @@ export const pages = [
 export type PageKey = (typeof pages)[number]["key"];
 
 export const seo = {
-  siteTitle: "Learn a Solo",
-  siteDescription: "Learn a solo by looping a YouTube video.",
+  appName: "Learn a Solo",
+  siteTitle: "Learn a Solo: Free Tool to Learn a Guitar Solo",
+  siteDescription:
+    "Learn a guitar solo easily with our free online tool. Slow down any video, loop sections, and master solos at your own pace. Perfect for beginners and advanced players looking to learn to guitar solo step-by-step.",
 };

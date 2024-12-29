@@ -50,7 +50,6 @@ export function resetPlayerState() {
 }
 
 function initializePlayer(videoId: string) {
-  console.log("Initializing player with video:", videoId);
   if (!window.YT) {
     console.log("YT not available yet");
     return;
@@ -68,7 +67,6 @@ function initializePlayer(videoId: string) {
     },
     events: {
       onReady: (event: YT.PlayerEvent) => {
-        console.log("Player ready event fired");
         // @ts-expect-error YT types are incomplete
         const videoData = event.target.getVideoData();
         useYouTubePlayerStore.setState({
@@ -80,23 +78,8 @@ function initializePlayer(videoId: string) {
           videoQuality: event.target.getPlaybackQuality(),
           videoUrl: event.target.getVideoUrl(),
         });
-
-        // Only proceed if we have a callback
-        // const callback = useYouTubePlayerStore.getState().onReadyCallback;
-        // if (callback) {
-        //   console.log("Callback found, checking if player is ready");
-        //   const checkReady = setInterval(() => {
-        //     console.log("Checking if player is ready");
-        //     if (isReady()) {
-        //       clearInterval(checkReady);
-        //       console.log("Player fully ready, executing callback");
-        //       callback();
-        //     }
-        //   }, 100);
-        // }
       },
       onStateChange: (event: YT.OnStateChangeEvent) => {
-        console.log("Player state changed:", event.data);
         const isNowPlaying = event.data === YT.PlayerState.PLAYING;
 
         if (isNowPlaying) {
@@ -122,7 +105,6 @@ export function getCurrentTime() {
 }
 
 export function loadVideo(videoId: string, onReady?: () => void) {
-  console.log("loadVideo", videoId, onReady);
   const playerStore = useYouTubePlayerStore.getState();
 
   if (onReady) {
@@ -169,28 +151,24 @@ export function getDuration() {
 
 export function seekTo(time: number) {
   const ready = isReady();
-  console.log("Attempting seekTo:", time, "isReady:", ready);
   if (!ready) return;
   useYouTubePlayerStore.getState().player?.seekTo(time, true);
 }
 
 export function setPlaybackRate(rate: number) {
   const ready = isReady();
-  console.log("Attempting setPlaybackRate:", rate, "isReady:", ready);
   if (!ready) return;
   useYouTubePlayerStore.getState().player?.setPlaybackRate(rate);
 }
 
 export function playVideo() {
   const ready = isReady();
-  console.log("Attempting playVideo, isReady:", ready);
   if (!ready) return;
   useYouTubePlayerStore.getState().player?.playVideo();
 }
 
 export function pauseVideo() {
   const ready = isReady();
-  console.log("Attempting pauseVideo, isReady:", ready);
   if (!ready) return;
   useYouTubePlayerStore.getState().player?.pauseVideo();
 }
@@ -253,7 +231,6 @@ export function useYoutubePlayer() {
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
     window.onYouTubeIframeAPIReady = () => {
-      console.log("onYouTubeIframeAPIReady fired");
       useYouTubePlayerStore.setState({ isReady: true });
     };
 
