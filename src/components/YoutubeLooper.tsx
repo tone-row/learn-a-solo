@@ -174,10 +174,10 @@ export function YouTubeLooper({
   return (
     <div className="grid p-6 max-w-[1460px] mx-auto md:p-10">
       <div className="flex justify-between items-start">
-        <p className="text-balance text-lg max-w-lg">
+        <h2 className="text-balance text-lg max-w-lg">
           Use <strong>Learn a Solo</strong> to practice any solo you find on
           youtube with easy looping and speed controls.
-        </p>
+        </h2>
         <Button
           onClick={handleReset}
           disabled={step !== "ready"}
@@ -226,9 +226,9 @@ export function YouTubeLooper({
 
 function BigInstruction({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-3xl text-balance text-center leading-tight">
+    <h3 className="text-3xl text-balance text-center leading-tight">
       {children}
-    </h2>
+    </h3>
   );
 }
 

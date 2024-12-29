@@ -1,7 +1,7 @@
 "use client";
 
 import { YouTubeLooper } from "@/components/YoutubeLooper";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { History } from "@/components/History";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
@@ -17,14 +17,6 @@ export default function Home() {
   const v = params.get("v");
   const start = params.get("start");
   const end = params.get("end");
-
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) return null;
 
   return (
     <main className="h-[100dvh] grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden content-start">

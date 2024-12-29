@@ -23,7 +23,9 @@ export function PageHeader({
   }, [activePage]);
   return (
     <header className="flex gap-8 p-4 justify-start w-full items-center bg-yellow-400 relative">
-      <h1 className="text-xl font-semibold">Learn a Solo</h1>
+      <h1 className="text-xl font-semibold" id="main-heading">
+        Learn a Solo
+      </h1>
       {pages.map((page) => (
         <button
           key={page.key}
