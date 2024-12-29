@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Undo2, Pause, Play, Gauge } from "lucide-react";
+import Image from "next/image";
 import {
   getDuration,
   getTitle,
@@ -25,6 +26,7 @@ import getYoutubeId from "get-youtube-id";
 import { Timer } from "./Timer";
 import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
+import Link from "next/link";
 
 type AppState = "no-video" | "no-looppoints" | "from-url" | "ready";
 
@@ -172,12 +174,35 @@ export function YouTubeLooper({
   };
 
   return (
-    <div className="grid p-6 max-w-[1460px] mx-auto md:p-10">
-      <div className="flex justify-between items-start">
-        <h2 className="text-balance text-lg max-w-lg">
-          Use <strong>Learn a Solo</strong> to practice any solo you find on
-          youtube with easy looping and speed controls.
-        </h2>
+    <div
+      className={cn("grid p-6 max-w-[1460px] mx-auto md:p-10", {
+        "h-full grid-rows-[auto_minmax(0,1fr)_0px] content-start":
+          step === "no-video",
+      })}
+    >
+      <div className="grid gap-6 sm:gap-2 sm:flex sm:justify-between sm:items-start">
+        <div className="grid gap-2">
+          <h2 className="text-balance text-lg max-w-lg">
+            Use <strong>Learn a Solo</strong> to practice any solo you find on
+            youtube with easy looping and speed controls.
+          </h2>
+          <div className="flex justify-start gap-6 items-center">
+            <Link
+              href="https://github.com/tone-row/learn-a-solo"
+              className="text-xs opacity-50 hover:opacity-100 transition-opacity duration-300"
+            >
+              Feedback? <span className="font-mono">tone-row/learn-a-solo</span>
+            </Link>
+            <Link href="https://buymeacoffee.com/lsm7ph8ty9">
+              <Image
+                src="/bmc-full-logo-no-background.png"
+                alt="Buy Me a Coffee"
+                width={120}
+                height={26.25}
+              />
+            </Link>
+          </div>
+        </div>
         <Button
           onClick={handleReset}
           disabled={step !== "ready"}
@@ -226,7 +251,7 @@ export function YouTubeLooper({
 
 function BigInstruction({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-3xl text-balance text-center leading-tight">
+    <h3 className="text-xl sm:text-3xl text-balance text-center leading-tight">
       {children}
     </h3>
   );
@@ -333,22 +358,24 @@ function NoVideo({
   setInputVideoId: (value: string) => void;
 }) {
   return (
-    <form
-      className="grid gap-6 w-full max-w-xl mx-auto mt-12"
-      onSubmit={handleLoadVideo}
-    >
-      <BigInstruction>Paste a video URL in the box below</BigInstruction>
-      <Input
-        type="text"
-        placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-        value={inputVideoId}
-        onChange={(e) => setInputVideoId(e.target.value)}
-        className="w-full bg-neutral-100 border-2 border-dashed border-black p-4"
-      />
-      <Button className="w-full" type="submit">
-        Load Video
-      </Button>
-    </form>
+    <div className="grid place-items-center pb-24">
+      <form
+        className="grid gap-6 w-full max-w-xl mx-auto"
+        onSubmit={handleLoadVideo}
+      >
+        <BigInstruction>Paste a video URL in the box below</BigInstruction>
+        <Input
+          type="text"
+          placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          value={inputVideoId}
+          onChange={(e) => setInputVideoId(e.target.value)}
+          className="w-full bg-neutral-100 border-2 border-dashed border-black p-4"
+        />
+        <Button className="w-full" type="submit">
+          Load Video
+        </Button>
+      </form>
+    </div>
   );
 }
 
