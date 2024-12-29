@@ -248,12 +248,10 @@ function NoLoopPoints({
     (values: number[]) => {
       const state = useScrubber.getState();
       if (values[0] !== state.startPoint) {
-        console.log("setting start point", values[0]);
         setStartPoint(values[0]);
         throttledPreviewPosition(values[0], false);
       }
       if (values[1] !== state.endPoint) {
-        console.log("setting end point", values[1]);
         setEndPoint(values[1]);
         throttledPreviewPosition(values[1], true);
       }
