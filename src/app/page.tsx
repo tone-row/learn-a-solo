@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { PageKey, pages } from "@/lib/constants";
 import { PageWrapper } from "@/components/PageWrapper";
+import { HowItWorks } from "@/components/HowItWorks";
 
 export default function Home() {
   const params = useSearchParams();
@@ -26,30 +27,25 @@ export default function Home() {
   if (!isClient) return null;
 
   return (
-    <main className="h-[100dvh] grid grid-rows-[auto_minmax(0,1fr)]">
+    <main className="h-[100dvh] grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden content-start">
       <PageHeader activePage={activePage} setActivePage={setActivePage} />
-      <div className="overflow-hidden">
-        <div
-          className="grid grid-cols-[repeat(3,100vw)] transition-transform duration-700"
-          style={{
-            transform: `translateX(-${activePageIndex * 100}vw)`,
-          }}
-        >
-          <PageWrapper>
-            <YouTubeLooper v={v} start={start} end={end} />
-          </PageWrapper>
-          <PageWrapper>
-            <History />
-          </PageWrapper>
-          <PageWrapper>Three</PageWrapper>
-        </div>
-      </div>
-      {/* <div>
-        <YouTubeLooper v={v} start={start} end={end} />
-        <div className="grid content-start overflow-auto bg-gray-50">
+
+      <div
+        className="grid grid-cols-[repeat(3,100vw)] transition-transform duration-700"
+        style={{
+          transform: `translateX(-${activePageIndex * 100}vw)`,
+        }}
+      >
+        <PageWrapper>
+          <YouTubeLooper v={v} start={start} end={end} />
+        </PageWrapper>
+        <PageWrapper>
           <History />
-        </div>
-      </div> */}
+        </PageWrapper>
+        <PageWrapper>
+          <HowItWorks />
+        </PageWrapper>
+      </div>
     </main>
   );
 }

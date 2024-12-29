@@ -14,3 +14,8 @@ export const pages = [
 ];
 
 export type PageKey = (typeof pages)[number]["key"];
+
+export const seo = {
+  siteTitle: "Learn a Solo",
+  siteDescription: "Learn a solo by looping a YouTube video.",
+};

@@ -178,7 +178,11 @@ export function YouTubeLooper({
           Use <strong>Learn a Solo</strong> to practice any solo you find on
           youtube with easy looping and speed controls.
         </p>
-        <Button onClick={handleReset}>
+        <Button
+          onClick={handleReset}
+          disabled={step !== "ready"}
+          className="disabled:opacity-25 disabled:cursor-not-allowed"
+        >
           <Undo2 size={20} />
           Enter a Video URL
         </Button>
@@ -311,10 +315,10 @@ function ReadyToLoop({
           <BigButton icon={<KeyboardKey>↑/↓</KeyboardKey>}>
             Adjust Speed
           </BigButton>
-          <BigButton icon={<KeyboardKey>0</KeyboardKey>}>Reset Speed</BigButton>
           <BigButton icon={<KeyboardKey>R</KeyboardKey>}>
             Restart Loop
           </BigButton>
+          <BigButton icon={<KeyboardKey>0</KeyboardKey>}>Reset Speed</BigButton>
         </div>
       </div>
     </div>
