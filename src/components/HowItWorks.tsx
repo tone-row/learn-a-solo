@@ -22,7 +22,7 @@ export function HowItWorks() {
           {steps.map((step, index) => (
             <div
               key={index}
-              className="grid gap-4 p-6 border-2 border-black rounded-xl"
+              className="grid gap-4 p-6 border-2 border-black dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-950"
             >
               <div className="grid gap-2">
                 <h3 className="text-xl font-semibold">{step.title}</h3>
@@ -50,7 +50,7 @@ export function HowItWorks() {
           {benefits.map((benefit, index) => (
             <div
               key={index}
-              className="grid gap-2 p-6 border-2 border-black rounded-xl"
+              className="grid gap-2 p-6 border-2 border-black dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-950"
             >
               <h3 className="text-xl font-semibold">{benefit.title}</h3>
               <p className="text-neutral-600 dark:text-neutral-300">
@@ -61,7 +61,7 @@ export function HowItWorks() {
         </div>
       </section>
 
-      <section className="grid gap-4 mt-8 p-6 bg-neutral-100 rounded-xl">
+      <section className="grid gap-4 mt-8 p-6 bg-neutral-100 dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
         <p className="text-balance text-lg">
           Remember, consistent practice is key to improving your guitar solo
           skills. With learnasolo.com, you have a powerful tool at your disposal

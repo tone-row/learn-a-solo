@@ -55,9 +55,17 @@ function initializePlayer(videoId: string) {
     return;
   }
 
+  // Calculate responsive dimensions
+  const container = document.getElementById("youtube-player");
+  if (!container) return;
+
+  const containerWidth = container.clientWidth;
+  const aspectRatio = 9 / 16; // Standard video aspect ratio
+  const height = Math.floor(containerWidth * aspectRatio);
+
   const player = new window.YT.Player("youtube-player", {
-    height: "360",
-    width: "640",
+    width: "100%",
+    height: height,
     videoId,
     playerVars: {
       controls: 0,

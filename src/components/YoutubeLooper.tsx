@@ -232,13 +232,13 @@ export function YouTubeLooper({
 
       <div
         className={cn(
-          "relative bg-gray-400 rounded-lg my-12 mx-auto pointer-events-none",
+          "relative bg-gray-400 rounded-lg my-12 mx-auto pointer-events-none w-full",
           {
             "aspect-video max-w-[640px]": step !== "no-video",
           },
         )}
       >
-        <div id="youtube-player" />
+        <div id="youtube-player" className="w-full h-full" />
       </div>
 
       {step === "ready" && (
@@ -310,18 +310,20 @@ function ReadyToLoop({
 }) {
   return (
     <div className="grid gap-4">
-      <div className="flex items-center justify-between gap-4 max-w-xl w-full mx-auto">
-        <div className="flex items-center space-x-2">
-          <Gauge size={20} />
-          <span className="text-2xl font-bold tabular-nums">
+      <div className="flex items-center justify-between gap-4 max-w-xl w-full mx-auto bg-neutral-50 dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800">
+        <div className="flex items-center space-x-3">
+          <Gauge size={20} className="text-neutral-500 dark:text-neutral-400" />
+          <span className="text-2xl font-bold tabular-nums tracking-tight">
             {(speed * 100).toFixed(1).padStart(5, "0")}
           </span>
         </div>
         <Timer />
       </div>
 
-      <div className="grid gap-1 justify-center">
-        <h4 className="uppercase opacity-50">Keyboard Shortcuts</h4>
+      <div className="grid gap-3 justify-center">
+        <h4 className="uppercase text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider text-center">
+          Keyboard Shortcuts
+        </h4>
         <div className="flex gap-2 flex-wrap items-center justify-center">
           <BigButton icon={<KeyboardKey>Space</KeyboardKey>}>
             {isVideoPlaying ? (
@@ -370,7 +372,7 @@ function NoVideo({
           placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
           value={inputVideoId}
           onChange={(e) => setInputVideoId(e.target.value)}
-          className="w-full bg-neutral-100 border-2 border-dashed border-black p-4"
+          className="w-full bg-neutral-100 dark:bg-neutral-900 border-2 border-dashed border-black dark:border-neutral-600 p-4 dark:text-white placeholder:text-neutral-500 dark:placeholder:text-neutral-400"
         />
         <Button className="w-full" type="submit">
           Load Video
@@ -396,7 +398,7 @@ function BigButton({
   icon: React.ReactNode;
 }) {
   return (
-    <button className="border-2 border-black dark:border-white rounded-xl flex items-center p-4 text-2xl font-semibold text-black dark:text-white gap-2">
+    <button className="border-2 border-black dark:border-neutral-700 rounded-xl flex items-center p-4 text-2xl font-semibold text-black dark:text-white gap-2 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200">
       {icon}
       {children}
     </button>
@@ -405,7 +407,7 @@ function BigButton({
 
 function KeyboardKey({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded-md bg-neutral-100 dark:bg-neutral-800 px-2 py-1">
+    <kbd className="rounded-md bg-neutral-100 dark:bg-neutral-800 px-2 py-1 text-sm font-mono shadow-sm border border-neutral-200 dark:border-neutral-700">
       {children}
     </kbd>
   );

@@ -24,11 +24,16 @@ export function PageHeader({
     indicatorRef.current.style.width = `${page.offsetWidth}px`;
   }, [activePage]);
   return (
-    <header className="grid sm:flex gap-2 sm:gap-8 p-2 sm:p-4 justify-between items-center bg-yellow-400 dark:bg-neutral-900 relative w-screen dark:text-white">
-      <h1 className="text-xl font-semibold" id="main-heading">
-        Learn a Solo
-      </h1>
-      <div className="flex items-center justify-start gap-8">
+    <header className="grid sm:flex gap-4 sm:gap-8 p-4 justify-between items-center bg-yellow-400 dark:bg-neutral-800 relative w-screen dark:text-white">
+      <div className="flex items-center justify-between sm:justify-start gap-4">
+        <h1 className="text-xl font-semibold" id="main-heading">
+          Learn a Solo
+        </h1>
+        <div className="block sm:hidden">
+          <ModeToggle />
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-4 sm:gap-8">
         {pages.map((page) => (
           <button
             key={page.key}
@@ -47,7 +52,9 @@ export function PageHeader({
           className="absolute left-0 bottom-0 h-2 bg-red-500 transition-all duration-300"
         />
       </div>
-      <ModeToggle />
+      <div className="hidden sm:block">
+        <ModeToggle />
+      </div>
     </header>
   );
 }
