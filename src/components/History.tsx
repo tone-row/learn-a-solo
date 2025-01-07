@@ -25,12 +25,14 @@ function HistoryItem({
 }: HistoryItemProps) {
   return (
     <div
-      className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-4 border-2 border-black/10 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer rounded-xl bg-white dark:bg-neutral-950 transition-colors duration-200"
+      className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-4 border-2 border-black/10 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer rounded-xl bg-white dark:bg-neutral-950 transition-colors duration-200 shadow-sm hover:shadow-md"
       onClick={() => onSelect({ videoId, startPoint, endPoint })}
     >
       <Clock className="h-6 w-6 text-neutral-500 dark:text-neutral-400" />
       <div className="grid gap-1 text-left">
-        <div className="text-xl font-semibold">{name}</div>
+        <div className="text-xl font-semibold bg-gradient-to-br from-neutral-900 to-neutral-700 dark:from-white dark:to-neutral-400 bg-clip-text text-transparent">
+          {name}
+        </div>
       </div>
       <Button
         variant="ghost"

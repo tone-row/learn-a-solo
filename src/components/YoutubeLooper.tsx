@@ -310,10 +310,10 @@ function ReadyToLoop({
 }) {
   return (
     <div className="grid gap-4">
-      <div className="flex items-center justify-between gap-4 max-w-xl w-full mx-auto bg-neutral-50 dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800">
+      <div className="flex items-center justify-between gap-4 max-w-xl w-full mx-auto bg-neutral-50 dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
         <div className="flex items-center space-x-3">
           <Gauge size={20} className="text-neutral-500 dark:text-neutral-400" />
-          <span className="text-2xl font-bold tabular-nums tracking-tight">
+          <span className="text-2xl font-bold tabular-nums tracking-tight bg-gradient-to-br from-neutral-900 to-neutral-700 dark:from-white dark:to-neutral-400 bg-clip-text text-transparent">
             {(speed * 100).toFixed(1).padStart(5, "0")}
           </span>
         </div>

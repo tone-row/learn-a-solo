@@ -4,7 +4,7 @@ export function HowItWorks() {
   return (
     <div className="grid gap-6 p-6 max-w-[1460px] mx-auto md:p-10">
       <header className="grid gap-4">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-4xl font-bold bg-gradient-to-br from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400 bg-clip-text text-transparent">
           How It Works: Learn a Guitar Solo
         </h1>
         <p className="text-balance text-lg max-w-2xl">
@@ -22,7 +22,7 @@ export function HowItWorks() {
           {steps.map((step, index) => (
             <div
               key={index}
-              className="grid gap-4 p-6 border-2 border-black dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-950"
+              className="grid gap-4 p-6 border-2 border-black/10 dark:border-neutral-800/50 rounded-xl bg-white dark:bg-neutral-950 shadow-sm hover:shadow-md transition-all duration-300"
             >
               <div className="grid gap-2">
                 <h3 className="text-xl font-semibold">{step.title}</h3>
@@ -50,7 +50,7 @@ export function HowItWorks() {
           {benefits.map((benefit, index) => (
             <div
               key={index}
-              className="grid gap-2 p-6 border-2 border-black dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-950"
+              className="grid gap-2 p-6 border-2 border-black/10 dark:border-neutral-800/50 rounded-xl bg-white dark:bg-neutral-950 shadow-sm hover:shadow-md transition-all duration-300"
             >
               <h3 className="text-xl font-semibold">{benefit.title}</h3>
               <p className="text-neutral-600 dark:text-neutral-300">
@@ -61,7 +61,7 @@ export function HowItWorks() {
         </div>
       </section>
 
-      <section className="grid gap-4 mt-8 p-6 bg-neutral-100 dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
+      <section className="grid gap-4 mt-8 p-6 bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-inner">
         <p className="text-balance text-lg">
           Remember, consistent practice is key to improving your guitar solo
           skills. With learnasolo.com, you have a powerful tool at your disposal
