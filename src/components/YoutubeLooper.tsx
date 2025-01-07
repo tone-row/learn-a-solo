@@ -52,24 +52,35 @@ export function YouTubeLooper({
   // We need the two effects that this hook runs
   useYoutubePlayer();
 
-  // Create throttled speed update function
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const throttledSpeedUpdate = useCallback(
-    throttle(
-      (increase: boolean) => {
-        setSpeed((prevSpeed) => {
-          const newSpeed = increase
-            ? Math.min(prevSpeed + 0.01, 5)
-            : Math.max(prevSpeed - 0.01, 0.25);
-          setPlaybackRate(newSpeed);
-          return newSpeed;
-        });
-      },
-      50,
-      { leading: true },
-    ),
-    [],
-  );
+  const handlePlayPause = useCallback(() => {
+    if (isPlaying()) {
+      pauseVideo();
+    } else {
+      playVideo();
+    }
+  }, []);
+
+  const handleSpeedChange = useCallback((increase: boolean) => {
+    setSpeed((prevSpeed) => {
+      const newSpeed = increase
+        ? Math.min(prevSpeed + 0.01, 5)
+        : Math.max(prevSpeed - 0.01, 0.25);
+      setPlaybackRate(newSpeed);
+      return newSpeed;
+    });
+  }, []);
+
+  const handleRestart = useCallback(() => {
+    const loopPoints = useYouTubePlayerStore.getState().loopPoints;
+    if (loopPoints) {
+      seekTo(loopPoints.startPoint);
+    }
+  }, []);
+
+  const handleResetSpeed = useCallback(() => {
+    setSpeed(1);
+    setPlaybackRate(1);
+  }, []);
 
   // Combined keyboard controls effect
   useEffect(() => {
@@ -80,18 +91,18 @@ export function YouTubeLooper({
         case "ArrowUp":
         case "ArrowDown":
           e.preventDefault();
-          throttledSpeedUpdate(e.key === "ArrowUp");
+          handleSpeedChange(e.key === "ArrowUp");
           break;
         case "r":
-          const loopPoints = useYouTubePlayerStore.getState().loopPoints;
-          if (loopPoints) {
-            seekTo(loopPoints.startPoint);
-          }
+          handleRestart();
           break;
         case "0":
-          setSpeed(1);
-          setPlaybackRate(1);
+          handleResetSpeed();
           break;
+        // case " ":
+        //   e.preventDefault();
+        //   handlePlayPause();
+        //   break;
       }
     };
 
@@ -99,9 +110,14 @@ export function YouTubeLooper({
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      throttledSpeedUpdate.cancel();
     };
-  }, [startPoint, step, throttledSpeedUpdate]);
+  }, [
+    step,
+    handleSpeedChange,
+    handleRestart,
+    handleResetSpeed,
+    handlePlayPause,
+  ]);
 
   const isVideoPlaying = useYouTubePlayerStore((state) => state.isPlaying);
 
@@ -277,7 +293,14 @@ export function YouTubeLooper({
       </div>
 
       {step === "ready" && (
-        <ReadyToLoop speed={speed} isVideoPlaying={isVideoPlaying} />
+        <ReadyToLoop
+          speed={speed}
+          isVideoPlaying={isVideoPlaying}
+          onPlayPause={handlePlayPause}
+          onSpeedChange={handleSpeedChange}
+          onRestart={handleRestart}
+          onResetSpeed={handleResetSpeed}
+        />
       )}
 
       {step === "from-url" && <FromURL afterLoadFromUrl={afterLoadFromUrl} />}
@@ -339,9 +362,17 @@ function NoLoopPoints({
 function ReadyToLoop({
   speed,
   isVideoPlaying,
+  onPlayPause,
+  onSpeedChange,
+  onRestart,
+  onResetSpeed,
 }: {
   speed: number;
   isVideoPlaying: boolean;
+  onPlayPause: () => void;
+  onSpeedChange: (increase: boolean) => void;
+  onRestart: () => void;
+  onResetSpeed: () => void;
 }) {
   return (
     <div className="grid gap-4">
@@ -361,7 +392,10 @@ function ReadyToLoop({
           Keyboard Shortcuts
         </h4>
         <div className="flex gap-2 flex-wrap items-center justify-center">
-          <BigButton icon={<KeyboardKey>Space</KeyboardKey>}>
+          <BigButton
+            icon={<KeyboardKey>Space</KeyboardKey>}
+            onClick={onPlayPause}
+          >
             {isVideoPlaying ? (
               <>
                 <Pause size={24} />
@@ -374,13 +408,26 @@ function ReadyToLoop({
               </>
             )}
           </BigButton>
-          <BigButton icon={<KeyboardKey>↑/↓</KeyboardKey>}>
-            Adjust Speed
-          </BigButton>
-          <BigButton icon={<KeyboardKey>R</KeyboardKey>}>
+          <BigButton icon={<KeyboardKey>R</KeyboardKey>} onClick={onRestart}>
             Restart Loop
           </BigButton>
-          <BigButton icon={<KeyboardKey>0</KeyboardKey>}>Reset Speed</BigButton>
+        </div>
+        <div className="flex gap-2 flex-wrap items-center justify-center">
+          <BigButton
+            icon={<KeyboardKey>↑</KeyboardKey>}
+            onClick={() => onSpeedChange(true)}
+          >
+            Speed Up
+          </BigButton>
+          <BigButton
+            icon={<KeyboardKey>↓</KeyboardKey>}
+            onClick={() => onSpeedChange(false)}
+          >
+            Slow Down
+          </BigButton>
+          <BigButton icon={<KeyboardKey>0</KeyboardKey>} onClick={onResetSpeed}>
+            Reset Speed
+          </BigButton>
         </div>
       </div>
     </div>
@@ -429,12 +476,17 @@ function FromURL({ afterLoadFromUrl }: { afterLoadFromUrl: () => void }) {
 function BigButton({
   children,
   icon,
+  onClick,
 }: {
   children: React.ReactNode;
   icon: React.ReactNode;
+  onClick?: () => void;
 }) {
   return (
-    <button className="border border-neutral-200 dark:border-neutral-700 rounded-xl flex items-center p-4 text-2xl font-semibold text-neutral-800 dark:text-white gap-2 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-200 shadow-sm hover:shadow-md">
+    <button
+      onClick={onClick}
+      className="border border-neutral-200 dark:border-neutral-700 rounded-xl flex items-center p-4 text-2xl font-semibold text-neutral-800 dark:text-white gap-2 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-200 shadow-sm hover:shadow-md"
+    >
       {icon}
       {children}
     </button>
