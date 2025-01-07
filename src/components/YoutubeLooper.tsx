@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Undo2, Pause, Play, Gauge } from "lucide-react";
+import { Undo2, Pause, Play, Gauge, Share2 } from "lucide-react";
 import Image from "next/image";
 import {
   getDuration,
@@ -59,8 +59,8 @@ export function YouTubeLooper({
       (increase: boolean) => {
         setSpeed((prevSpeed) => {
           const newSpeed = increase
-            ? Math.min(prevSpeed + 0.025, 5)
-            : Math.max(prevSpeed - 0.025, 0.25);
+            ? Math.min(prevSpeed + 0.01, 5)
+            : Math.max(prevSpeed - 0.01, 0.25);
           setPlaybackRate(newSpeed);
           return newSpeed;
         });
@@ -204,14 +204,49 @@ export function YouTubeLooper({
             </Link>
           </div>
         </div>
-        <Button
-          onClick={handleReset}
-          disabled={step !== "ready"}
-          className="disabled:opacity-25 disabled:cursor-not-allowed"
-        >
-          <Undo2 size={20} />
-          Enter a Video URL
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleReset}
+            disabled={step !== "ready"}
+            className="disabled:opacity-25 disabled:cursor-not-allowed"
+          >
+            <Undo2 size={20} />
+            Reset Video
+          </Button>
+          <Button
+            onClick={() => {
+              const url = new URL(window.location.href);
+              const loopPoints = useYouTubePlayerStore.getState().loopPoints;
+              if (loopPoints) {
+                const id = getYoutubeId(
+                  useYouTubePlayerStore.getState().videoUrl ?? "",
+                );
+                if (!id) return;
+                url.searchParams.set("v", id);
+                url.searchParams.set("start", loopPoints.startPoint.toString());
+                url.searchParams.set("end", loopPoints.endPoint.toString());
+                navigator.clipboard.writeText(url.toString()).then(() => {
+                  const button = document.getElementById("share-button");
+                  if (button) {
+                    const icon = button.querySelector("svg");
+                    if (icon) {
+                      icon.classList.add("text-green-500");
+                      setTimeout(() => {
+                        icon.classList.remove("text-green-500");
+                      }, 2000);
+                    }
+                  }
+                });
+              }
+            }}
+            disabled={step !== "ready"}
+            id="share-button"
+            className="disabled:opacity-25 disabled:cursor-not-allowed"
+          >
+            <Share2 size={20} className="transition-colors duration-200" />
+            Share Loop
+          </Button>
+        </div>
       </div>
 
       {/* {currentVideoId && getTitle() && (
@@ -310,11 +345,12 @@ function ReadyToLoop({
 }) {
   return (
     <div className="grid gap-4">
-      <div className="flex items-center justify-between gap-4 max-w-xl w-full mx-auto bg-neutral-50 dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
+      <div className="flex items-center justify-between gap-4 max-w-xl w-full mx-auto bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-900/80 p-4 rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 shadow-sm backdrop-blur-sm">
         <div className="flex items-center space-x-3">
           <Gauge size={20} className="text-neutral-500 dark:text-neutral-400" />
           <span className="text-2xl font-bold tabular-nums tracking-tight bg-gradient-to-br from-neutral-900 to-neutral-700 dark:from-white dark:to-neutral-400 bg-clip-text text-transparent">
-            {(speed * 100).toFixed(1).padStart(5, "0")}
+            {(speed * 100).toFixed(0).padStart(3, "0")}
+            <span className="ml-0.5">%</span>
           </span>
         </div>
         <Timer />
@@ -398,7 +434,7 @@ function BigButton({
   icon: React.ReactNode;
 }) {
   return (
-    <button className="border-2 border-black dark:border-neutral-700 rounded-xl flex items-center p-4 text-2xl font-semibold text-black dark:text-white gap-2 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200">
+    <button className="border border-neutral-200 dark:border-neutral-700 rounded-xl flex items-center p-4 text-2xl font-semibold text-neutral-800 dark:text-white gap-2 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-200 shadow-sm hover:shadow-md">
       {icon}
       {children}
     </button>
@@ -407,7 +443,7 @@ function BigButton({
 
 function KeyboardKey({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded-md bg-neutral-100 dark:bg-neutral-800 px-2 py-1 text-sm font-mono shadow-sm border border-neutral-200 dark:border-neutral-700">
+    <kbd className="rounded-lg bg-neutral-50 dark:bg-neutral-800/50 px-2.5 py-1.5 text-sm font-mono text-neutral-600 dark:text-neutral-300 shadow-sm ring-1 ring-neutral-200/50 dark:ring-neutral-700/50">
       {children}
     </kbd>
   );
