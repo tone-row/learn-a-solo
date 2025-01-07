@@ -26,7 +26,9 @@ export function HowItWorks() {
             >
               <div className="grid gap-2">
                 <h3 className="text-xl font-semibold">{step.title}</h3>
-                <p className="text-neutral-600">{step.description}</p>
+                <p className="text-neutral-600 dark:text-neutral-300">
+                  {step.description}
+                </p>
               </div>
               <div className="aspect-video bg-neutral-100 rounded-lg border border-black/50 overflow-hidden shadow-sm">
                 <Image
@@ -51,7 +53,9 @@ export function HowItWorks() {
               className="grid gap-2 p-6 border-2 border-black rounded-xl"
             >
               <h3 className="text-xl font-semibold">{benefit.title}</h3>
-              <p className="text-neutral-600">{benefit.description}</p>
+              <p className="text-neutral-600 dark:text-neutral-300">
+                {benefit.description}
+              </p>
             </div>
           ))}
         </div>

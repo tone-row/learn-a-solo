@@ -199,6 +199,7 @@ export function YouTubeLooper({
                 alt="Buy Me a Coffee"
                 width={120}
                 height={26.25}
+                className="bg-white rounded-md p-1"
               />
             </Link>
           </div>
@@ -395,7 +396,7 @@ function BigButton({
   icon: React.ReactNode;
 }) {
   return (
-    <button className="border-2 border-black rounded-xl flex items-center p-4 text-2xl font-semibold text-black gap-2">
+    <button className="border-2 border-black dark:border-white rounded-xl flex items-center p-4 text-2xl font-semibold text-black dark:text-white gap-2">
       {icon}
       {children}
     </button>
@@ -403,5 +404,9 @@ function BigButton({
 }
 
 function KeyboardKey({ children }: { children: React.ReactNode }) {
-  return <kbd className="rounded-md bg-neutral-100 px-2 py-1">{children}</kbd>;
+  return (
+    <kbd className="rounded-md bg-neutral-100 dark:bg-neutral-800 px-2 py-1">
+      {children}
+    </kbd>
+  );
 }

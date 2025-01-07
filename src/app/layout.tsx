@@ -18,13 +18,19 @@ export const metadata: Metadata = {
   description: seo.siteDescription,
 };
 
+import { ThemeProvider } from "@/components/theme-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(pathwayExtreme.variable, "antialiased")}>
+    <html
+      lang="en"
+      className={cn(pathwayExtreme.variable, "antialiased")}
+      suppressHydrationWarning
+    >
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       <link
@@ -41,7 +47,14 @@ export default function RootLayout({
       />
       <link rel="manifest" href="/site.webmanifest" />
       <body>
-        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+        </ThemeProvider>
       </body>
       <GoogleAnalytics gaId="G-EL1P5WMP4R" />
     </html>

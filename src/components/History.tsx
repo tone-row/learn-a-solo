@@ -25,7 +25,7 @@ function HistoryItem({
 }: HistoryItemProps) {
   return (
     <div
-      className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-4 border-2 border-black hover:bg-neutral-100 cursor-pointer rounded-xl"
+      className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-4 border-2 border-black dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer rounded-xl"
       onClick={() => onSelect({ videoId, startPoint, endPoint })}
     >
       <Clock className="h-6 w-6" />
